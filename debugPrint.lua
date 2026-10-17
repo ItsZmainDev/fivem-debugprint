@@ -20,6 +20,7 @@ local CFG <const> = {
 --- @field public indent? boolean
 --- @field public maxDepth? number
 --- @field public tag? string
+--- @field public showMeta? boolean
 
 --- debug - Print any data in a readable format (raises on error, use debugPrint instead)
 --- @param data any data to print
@@ -32,6 +33,7 @@ local function debug(data, opts)
     local indent   = opts.indent ~= false
     local maxDepth = type(opts.maxDepth) == "number" and opts.maxDepth or 32
     local tag      = opts.tag and ("[" .. tostring(opts.tag) .. "] ") or ""
+    local showMeta = opts.showMeta == true
 
     local seen, refId = {}, 0
     local function convert(v, depth)
@@ -84,11 +86,16 @@ local function debug(data, opts)
                 end
             end
 
-            isArray = isArray and maxKey == count
+            local meta = showMeta and mt and type(mt.__index) == "table" and mt.__index or nil
+            isArray = isArray and maxKey == count and not meta
 
             for i = 1, count do
                 local k, val = entries[i][1], entries[i][2]
                 out[isArray and k or tostring(k)] = convert(val, depth + 1)
+            end
+
+            if meta then
+                out["<meta>"] = convert(meta, depth + 1)
             end
         end)
 
